@@ -52,6 +52,28 @@ router.get('/favorites', async (req,res,next) => {
   }
 });
 
+router.post('/lastWatched', async (req, res, next) => {
+  try {
+    const user_id = req.session.user_id;
+    const recipe_id = req.body.recipeId;
+    await user_utils.addToLastWatched(user_id, recipe_id);
+    res.sendStatus(200);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/lastWatched', async (req, res, next) => {
+  try {
+    const user_id = req.session.user_id;
+    const results = await user_utils.getLastWatched(user_id);
+    res.status(200).send(results);
+  } catch (err) {
+    next(err);
+  }
+});
+
+
 
 
 

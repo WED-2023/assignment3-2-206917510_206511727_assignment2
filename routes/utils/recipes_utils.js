@@ -35,9 +35,36 @@ async function getRecipeDetails(recipe_id) {
     }
 }
 
+async function getRandomRecipes(number = 3) {
+  const response = await axios.get(`${api_domain}/random`, {
+    params: {
+      number: number,
+      apiKey: process.env.spooncular_apiKey
+    }
+  });
 
+  return response.data.recipes;
+}
 
+async function searchRecipes(query, cuisine, diet, intolerances, number = 5, sort = "popularity") {
+  const response = await axios.get(`${api_domain}/complexSearch`, {
+    params: {
+      query,
+      cuisine,
+      diet,
+      intolerances,
+      number,
+      sort,
+      addRecipeInformation: true,
+      apiKey: process.env.spooncular_apiKey,
+    }
+  });
+  return response.data.results;
+}
+
+exports.searchRecipes = searchRecipes;
 exports.getRecipeDetails = getRecipeDetails;
+exports.getRandomRecipes = getRandomRecipes;
 
 
 
