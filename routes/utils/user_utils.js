@@ -5,42 +5,82 @@ async function markAsFavorite(user_id, recipe_id){
     await DButils.execQuery(`insert into FavoriteRecipes values ('${user_id}',${recipe_id})`);
 }
 
-async function getFavoriteRecipes(user_id){
-    const recipes_id = await DButils.execQuery(`select recipe_id from FavoriteRecipes where user_id='${user_id}'`);
-    return recipes_id;
+async function getFavoriteRecipes(user_id) {
+  // בדיקה אם בכלל יש טבלת favoriteRecipes
+  const tableCheck = await DButils.execQuery(`SHOW TABLES LIKE 'FavoriteRecipes'`);
+  if (tableCheck.length === 0) {
+    return null; // טבלה לא קיימת
+  }
+
+  // שליפת המועדפים למשתמש
+  const recipes_id = await DButils.execQuery(`
+    SELECT recipe_id FROM FavoriteRecipes WHERE user_id='${user_id}'
+  `);
+
+  if (!recipes_id || recipes_id.length === 0) {
+    return null; // אין מועדפים למשתמש
+  }
+
+  return recipes_id; // מחזיר את כל המועדפים של המשתמש
 }
 
-async function addToLastWatched(user_id, recipe_id) {
-  await DButils.execQuery(`
-    INSERT INTO LastWatchedRecipes (user_id, recipe_id)
-    VALUES ('${user_id}', ${recipe_id})
-    ON DUPLICATE KEY UPDATE watched_at = CURRENT_TIMESTAMP
+
+async function addToLastWatched(user_id, new_recipe_id) {
+  const result = await DButils.execQuery(`
+    SELECT recipe_id1, recipe_id2, recipe_id3
+    FROM LastWatchedRecipes
+    WHERE user_id = ${user_id}
   `);
 
-  // מחיקה אם יש יותר מ־3 רשומות
-  await DButils.execQuery(`
-    DELETE FROM LastWatchedRecipes
-    WHERE user_id = '${user_id}' AND recipe_id NOT IN (
-      SELECT recipe_id FROM (
-        SELECT recipe_id FROM LastWatchedRecipes
-        WHERE user_id = '${user_id}'
-        ORDER BY watched_at DESC
-        LIMIT 3
-      ) AS temp
-    );
-  `);
+  if (result.length === 0) {
+    // No entry yet, insert a new row
+    await DButils.execQuery(`
+      INSERT INTO LastWatchedRecipes (user_id, recipe_id1)
+      VALUES (${user_id}, ${new_recipe_id})
+    `);
+  } else {
+    const { recipe_id1, recipe_id2, recipe_id3 } = result[0];
+
+    // If recipe is already in the list, remove it before re-adding (optional enhancement)
+    const list = [recipe_id1, recipe_id2, recipe_id3].filter(r => r !== null && r !== new_recipe_id);
+
+    // Add new recipe at the end, keep only last 3
+    list.unshift(new_recipe_id); // add new to front
+    const [r1, r2, r3] = list.slice(0, 3); // max 3
+
+    await DButils.execQuery(`
+      UPDATE LastWatchedRecipes
+      SET recipe_id1 = ${r1 ?? 'NULL'},
+          recipe_id2 = ${r2 ?? 'NULL'},
+          recipe_id3 = ${r3 ?? 'NULL'}
+      WHERE user_id = ${user_id}
+    `);
+  }
 }
 
 async function getLastWatched(user_id) {
-  const ids = await DButils.execQuery(`
-    SELECT recipe_id FROM LastWatchedRecipes
-    WHERE user_id = '${user_id}'
-    ORDER BY watched_at DESC
-    LIMIT 3
+  const result = await DButils.execQuery(`
+    SELECT recipe_id1, recipe_id2, recipe_id3
+    FROM LastWatchedRecipes
+    WHERE user_id = ${user_id}
   `);
-  const ids_array = ids.map(r => r.recipe_id);
-  return await recipe_utils.getRecipesPreview(ids_array);
+
+  // User not found in table
+  if (result.length === 0) {
+    return "none";
+  }
+
+  // Extract recipe IDs and filter out nulls
+  const { recipe_id1, recipe_id2, recipe_id3 } = result[0];
+  const watched = [recipe_id1, recipe_id2, recipe_id3].filter(id => id !== null);
+
+  if (watched.length === 0) {
+    return "none";
+  }
+
+  return watched;
 }
+
 
 
 exports.addToLastWatched = addToLastWatched;

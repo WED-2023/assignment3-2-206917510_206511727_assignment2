@@ -44,6 +44,18 @@ async function getRecipeDetails(recipe_id) {
   }
 }
 
+async function getMultipleRecipeDetails(recipe_ids_array) {
+  const results = [];
+
+  for (const id of recipe_ids_array) {
+    const detail = await getRecipeDetails(id); // call your original function
+    results.push(detail);
+  }
+
+  return results;
+}
+
+
 async function getRandomRecipes() {
   const response = await axios.get(`${api_domain}/random`, {
     params: {
@@ -76,6 +88,5 @@ async function searchRecipes(query, cuisine, diet, intolerances, number = 5, sor
 exports.searchRecipes = searchRecipes;
 exports.getRecipeDetails = getRecipeDetails;
 exports.getRandomRecipes = getRandomRecipes;
-
-
-
+exports.getMultipleRecipeDetails = getMultipleRecipeDetails;
+exports.getRecipeInformation = getRecipeInformation;

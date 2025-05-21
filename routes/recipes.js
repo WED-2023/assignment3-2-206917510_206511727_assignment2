@@ -49,7 +49,7 @@ router.get('/search', async (req, res, next) => {
   }
 });
 
-router.get("/:recipeId", async (req, res, next) => {
+router.get("/details/:recipeId", async (req, res, next) => {
   try {
     const recipe = await recipes_utils.getRecipeDetails(req.params.recipeId);
     res.send(recipe);
@@ -58,7 +58,14 @@ router.get("/:recipeId", async (req, res, next) => {
   }
 });
 
-
+router.get("/information/:recipeId", async (req, res, next) => {
+  try {
+    const recipe = await recipes_utils.getRecipeInformation(req.params.recipeId);
+    res.send(recipe.data);
+  } catch (error) {
+    next(error);
+  }
+});
 
 
 module.exports = router;
