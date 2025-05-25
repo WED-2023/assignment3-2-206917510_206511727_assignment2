@@ -1,10 +1,10 @@
 openapi: 3.0.3
 info:
-  title: Savta & Others - API
-  description: API for user and recipe management in the 'Savta & Others' project
+  title: CookingAi - API
+  description: API for user and recipe management in the 'CookingAi' project
   version: 1.0.1
 servers:
-- url: https://virtserver.swaggerhub.com/idoandyehonatan/Recipes/1.0.0
+- url: https://app.swaggerhub.com/apis/idoandyehonatan/Recipes/1.0.1
   description: SwaggerHub API Auto Mocking
 - url: http://localhost:3000
   description: Local development server
