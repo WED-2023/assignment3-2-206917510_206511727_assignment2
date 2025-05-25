@@ -1,4 +1,5 @@
 const axios = require("axios");
+const e = require("express");
 require("dotenv").config();
 const api_domain = "https://api.spoonacular.com/recipes";
 
@@ -59,17 +60,17 @@ async function getMultipleRecipeDetails(recipe_ids_array) {
 async function getRandomRecipes() {
   const response = await axios.get(`${api_domain}/random`, {
     params: {
-      number: 3, // או כל מספר בין 1 ל-100
-      includeNutrition: false, // לא חובה אבל מומלץ להצהיר
+      number: 3,
+      includeNutrition: false, 
       apiKey: process.env.spooncular_apiKey,
     }
   });
 
-  return response.data.recipes; // מחזיר מערך של מתכונים
+  return response.data.recipes; 
 }
 
 
-async function searchRecipes(query, cuisine, diet, intolerances, number = 5, sort = "popularity") {
+async function searchRecipes(query, cuisine, diet, intolerances, number, sort = "popularity") {
   const response = await axios.get(`${api_domain}/complexSearch`, {
     params: {
       query,
@@ -84,6 +85,7 @@ async function searchRecipes(query, cuisine, diet, intolerances, number = 5, sor
   });
   return response.data.results;
 }
+
 
 exports.searchRecipes = searchRecipes;
 exports.getRecipeDetails = getRecipeDetails;

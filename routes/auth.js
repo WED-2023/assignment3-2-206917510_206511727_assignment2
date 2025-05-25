@@ -18,6 +18,10 @@ router.post("/Register", async (req, res, next) => {
       email: req.body.email,
       // profilePic: req.body.profilePic
     }
+    if (!user_details.username || !user_details.firstname || !user_details.lastname || !user_details.country || !user_details.password || !user_details.email) {
+      throw { status: 400, message: "Missing required fields" };
+    }
+
     let users = [];
     users = await DButils.execQuery("SELECT username from users");
 
@@ -55,7 +59,7 @@ router.post("/Login", async (req, res, next) => {
     )[0];
 
     if (!bcrypt.compareSync(req.body.password, user.password)) {
-      throw { status: 401, message: "Username or Password incorrect" };
+      throw { status: 401, message: "Password incorrect" };
     }
 
     // Set cookie

@@ -1,0 +1,565 @@
+openapi: 3.0.3
+info:
+  title: Savta & Others - API
+  description: API for user and recipe management in the 'Savta & Others' project
+  version: 1.0.1
+servers:
+- url: https://virtserver.swaggerhub.com/idoandyehonatan/Recipes/1.0.0
+  description: SwaggerHub API Auto Mocking
+- url: http://localhost:3000
+  description: Local development server
+tags:
+- name: Authorization
+  description: "User registration, login, and logout actions"
+- name: Recipes
+  description: External recipe retrieval from Spoonacular
+- name: User
+  description: "User-specific - favorites, last watched, custom recipes, and family recipes"
+paths:
+  /Register:
+    post:
+      tags:
+      - Authorization
+      summary: Register a new user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+        required: true
+      responses:
+        "201":
+          description: User successfully registered
+        "400":
+          description: Missing required fields
+        "409":
+          description: Username already taken
+  /Login:
+    post:
+      tags:
+      - Authorization
+      summary: Log in a user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+        required: true
+      responses:
+        "200":
+          description: Login succeeded
+        "401":
+          description: Username or password incorrect
+  /Logout:
+    post:
+      tags:
+      - Authorization
+      summary: Log out a user
+      responses:
+        "200":
+          description: Logout succeeded
+  /:
+    get:
+      tags:
+      - Recipes
+      summary: Check server root status
+      responses:
+        "200":
+          description: Server is reachable
+  /recipes/random:
+    get:
+      tags:
+      - Recipes
+      summary: Get 3 random recipes from Spoonacular
+      responses:
+        "200":
+          description: Returns list of 3 random recipes - the template below return just 1!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200'
+  /recipes/search:
+    get:
+      tags:
+      - Recipes
+      summary: Search recipes using Spoonacular API
+      parameters:
+      - name: query
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: cuisine
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: diet
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: intolerances
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: number
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 5
+      - name: sort
+        in: query
+        required: false
+        schema:
+          type: string
+          default: popularity
+      responses:
+        "200":
+          description: Search results returned 5/10/15 - the tamplate below is for number = 1 result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_1'
+        "404":
+          description: No results found
+  /recipes/details/{recipeId}:
+    get:
+      tags:
+      - Recipes
+      summary: Get basic recipe details
+      parameters:
+      - name: recipeId
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        "200":
+          description: Recipe details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_2'
+        "400":
+          description: Missing recipe ID
+  /recipes/information/{recipeId}:
+    get:
+      tags:
+      - Recipes
+      summary: Get full recipe information from Spoonacular
+      parameters:
+      - name: recipeId
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        "200":
+          description: Full Spoonacular recipe info returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecipeFull'
+        "400":
+          description: Missing recipe ID
+  /users/favorites:
+    get:
+      tags:
+      - User
+      summary: Get user's favorite recipes
+      responses:
+        "200":
+          description: List of favorite recipes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/details'
+        "404":
+          description: No favorite recipes found
+    post:
+      tags:
+      - User
+      summary: Add recipe to favorites
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FavoriteRecipe'
+        required: true
+      responses:
+        "200":
+          description: Recipe marked as favorite
+        "400":
+          description: Missing recipeId in request body
+  /users/lastWatched:
+    get:
+      tags:
+      - User
+      summary: Get user's last watched recipes
+      responses:
+        "200":
+          description: List of recently watched recipe IDs - max lenght 3
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  maxLength: 3
+                  type: integer
+        "404":
+          description: No recently watched recipes found
+    post:
+      tags:
+      - User
+      summary: Add recipe to last watched list (FIFO)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LastWatchedRequest'
+        required: true
+      responses:
+        "200":
+          description: Recipe added to last watched list
+        "400":
+          description: Missing recipeId in request body
+  /users/add-recipes:
+    post:
+      tags:
+      - User
+      summary: Add a custom recipe for the user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/users_addrecipes_body'
+        required: true
+      responses:
+        "201":
+          description: Recipe created successfully
+        "400":
+          description: Missing required recipe fields
+  /users/my-recipes:
+    get:
+      tags:
+      - User
+      summary: Get recipes created by the current user
+      responses:
+        "200":
+          description: List of user-created recipes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_3'
+  /user/viewed:
+    get:
+      tags:
+      - User
+      summary: Get all viewed recipe IDs for the logged-in user
+      responses:
+        "200":
+          description: List of recipe IDs viewed by the user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_4'
+    post:
+      tags:
+      - User
+      summary: Add a recipe view for the logged-in user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/user_viewed_body'
+        required: true
+      responses:
+        "201":
+          description: Recipe view added successfully
+        "400":
+          description: Missing recipeId
+components:
+  schemas:
+    RegisterRequest:
+      required:
+      - country
+      - email
+      - firstname
+      - lastname
+      - password
+      - username
+      type: object
+      properties:
+        username:
+          type: string
+        firstname:
+          type: string
+        lastname:
+          type: string
+        country:
+          type: string
+        password:
+          type: string
+        email:
+          type: string
+    LoginRequest:
+      required:
+      - password
+      - username
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+    FavoriteRecipe:
+      required:
+      - recipeId
+      type: object
+      properties:
+        recipeId:
+          type: integer
+    LastWatchedRequest:
+      required:
+      - recipeId
+      type: object
+      properties:
+        recipeId:
+          type: integer
+    UserRecipe:
+      required:
+      - ingredients
+      - instructions
+      - title
+      type: object
+      properties:
+        title:
+          type: string
+        ingredients:
+          type: array
+          items:
+            type: string
+        instructions:
+          type: string
+        isFamily:
+          type: boolean
+    details:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        readyInMinutes:
+          type: integer
+        image:
+          type: string
+        popularity:
+          type: integer
+        vegan:
+          type: boolean
+        vegetarian:
+          type: boolean
+        glutenFree:
+          type: boolean
+    RecipeFull:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        image:
+          type: string
+        servings:
+          type: integer
+        readyInMinutes:
+          type: integer
+        cookingMinutes:
+          type: integer
+        preparationMinutes:
+          type: integer
+        healthScore:
+          type: number
+        spoonacularScore:
+          type: number
+        pricePerServing:
+          type: number
+        cheap:
+          type: boolean
+        dairyFree:
+          type: boolean
+        glutenFree:
+          type: boolean
+        ketogenic:
+          type: boolean
+        vegan:
+          type: boolean
+        vegetarian:
+          type: boolean
+        veryHealthy:
+          type: boolean
+        veryPopular:
+          type: boolean
+        whole30:
+          type: boolean
+        instructions:
+          type: string
+        dishTypes:
+          type: array
+          items:
+            type: string
+        extendedIngredients:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecipeFull_extendedIngredients'
+        winePairing:
+          $ref: '#/components/schemas/RecipeFull_winePairing'
+    inline_response_200:
+      type: object
+      properties:
+        recipes:
+          type: array
+          items:
+            $ref: '#/components/schemas/inline_response_200_recipes'
+    inline_response_200_1:
+      type: object
+      properties:
+        offset:
+          type: integer
+        number:
+          type: integer
+          example: 1
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/inline_response_200_1_results'
+        totalResults:
+          type: integer
+    inline_response_200_2:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        readyInMinutes:
+          type: integer
+        image:
+          type: string
+        popularity:
+          type: integer
+        vegan:
+          type: boolean
+        vegetarian:
+          type: boolean
+        glutenFree:
+          type: boolean
+    users_addrecipes_body:
+      required:
+      - ingredients
+      - instructions
+      - title
+      type: object
+      properties:
+        title:
+          type: string
+        image:
+          type: string
+        readyInMinutes:
+          type: integer
+        popularity:
+          type: integer
+        vegan:
+          type: boolean
+        vegetarian:
+          type: boolean
+        glutenFree:
+          type: boolean
+        instructions:
+          type: string
+        ingredients:
+          type: string
+    inline_response_200_3:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserRecipe'
+        success:
+          type: boolean
+    inline_response_200_4:
+      type: object
+      properties:
+        viewed:
+          type: array
+          items:
+            type: integer
+    user_viewed_body:
+      required:
+      - recipeId
+      type: object
+      properties:
+        recipeId:
+          type: integer
+    RecipeFull_extendedIngredients:
+      type: object
+      properties:
+        name:
+          type: string
+        amount:
+          type: number
+        unit:
+          type: string
+        original:
+          type: string
+    RecipeFull_winePairing_productMatches:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        price:
+          type: string
+        imageUrl:
+          type: string
+        score:
+          type: number
+    RecipeFull_winePairing:
+      type: object
+      properties:
+        pairedWines:
+          type: array
+          items:
+            type: string
+        pairingText:
+          type: string
+        productMatches:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecipeFull_winePairing_productMatches'
+    inline_response_200_recipes:
+      type: object
+      properties:
+        recipes:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecipeFull'
+    inline_response_200_1_results:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        image:
+          type: string
+        imageType:
+          type: string

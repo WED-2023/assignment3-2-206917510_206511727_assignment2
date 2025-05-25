@@ -20,37 +20,48 @@ router.get('/random', async (req, res, next) => {
 
 
 router.get('/search', async (req, res, next) => {
+  let results = {
+    query : "",
+      cuisine : "",
+      diet : "",
+      intolerances : "",
+      number : 5,
+      sort : "popularity"
+  }
   try {
-    const {
-      query = "",
-      cuisine = "",
-      diet = "",
-      intolerances = "",
-      number = 5,
-      sort = "popularity"
-    } = req.query;
+    results.query = req.query.query || "";
+    results.cuisine = req.query.cuisine || "";
+    results.diet = req.query.diet || "";
+    results.intolerances = req.query.intolerances || "";
+    results.number = req.query.number;
+    results.sort = req.query.sort || "popularity";
 
-    const results = await recipes_utils.searchRecipes(
-      query,
-      cuisine,
-      diet,
-      intolerances,
-      number,
-      sort
+    const searchResults = await recipes_utils.searchRecipes(
+      results.query,
+      results.cuisine,
+      results.diet,
+      results.intolerances,
+      results.number,
+      results.sort
     );
 
-    if (results.length === 0) {
+    if (searchResults.length === 0) {
       return res.status(404).send({ message: "No results found", success: false });
     }
 
-    res.status(200).send(results);
+    res.status(200).send(searchResults);
   } catch (err) {
     next(err);
   }
 });
 
+
+
 router.get("/details/:recipeId", async (req, res, next) => {
   try {
+    if (!req.params.recipeId) {
+      throw { status: 400, message: "Missing recipe ID" };
+    }
     const recipe = await recipes_utils.getRecipeDetails(req.params.recipeId);
     res.send(recipe);
   } catch (error) {
@@ -60,6 +71,9 @@ router.get("/details/:recipeId", async (req, res, next) => {
 
 router.get("/information/:recipeId", async (req, res, next) => {
   try {
+    if (!req.params.recipeId) {
+      throw { status: 400, message: "Missing recipe ID" };
+    }
     const recipe = await recipes_utils.getRecipeInformation(req.params.recipeId);
     res.send(recipe.data);
   } catch (error) {

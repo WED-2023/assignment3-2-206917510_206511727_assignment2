@@ -6,22 +6,21 @@ async function markAsFavorite(user_id, recipe_id){
 }
 
 async function getFavoriteRecipes(user_id) {
-  // בדיקה אם בכלל יש טבלת favoriteRecipes
   const tableCheck = await DButils.execQuery(`SHOW TABLES LIKE 'FavoriteRecipes'`);
   if (tableCheck.length === 0) {
-    return null; // טבלה לא קיימת
+    return null; 
   }
 
-  // שליפת המועדפים למשתמש
+  
   const recipes_id = await DButils.execQuery(`
     SELECT recipe_id FROM FavoriteRecipes WHERE user_id='${user_id}'
   `);
 
   if (!recipes_id || recipes_id.length === 0) {
-    return null; // אין מועדפים למשתמש
+    return null;  
   }
 
-  return recipes_id; // מחזיר את כל המועדפים של המשתמש
+  return recipes_id; 
 }
 
 
@@ -81,9 +80,67 @@ async function getLastWatched(user_id) {
   return watched;
 }
 
+async function insertRecipe({
+  user_id,
+  title,
+  image,
+  readyInMinutes,
+  popularity,
+  vegan,
+  vegetarian,
+  glutenFree,
+  instructions,
+  ingredients
+}) {
+  await DButils.execQuery(`
+    INSERT INTO userrecipes (
+      user_id, title, image, readyInMinutes, popularity,
+      vegan, vegetarian, glutenFree, instructions, ingredients
+    ) VALUES (
+      '${user_id}', '${title}', '${image}', ${readyInMinutes}, ${popularity || 0},
+      ${vegan ? 1 : 0}, ${vegetarian ? 1 : 0}, ${glutenFree ? 1 : 0},
+      '${instructions}', '${ingredients}'
+    )
+  `);
+}
 
+async function getUserRecipes(user_id) {
+  const recipes = await DButils.execQuery(`
+    SELECT title, image, readyInMinutes, popularity, vegan, vegetarian, glutenFree
+    FROM userrecipes WHERE user_id = '${user_id}'
+  `);
+
+  return recipes.map(recipe => ({
+    title: recipe.title,
+    image: recipe.image,
+    readyInMinutes: recipe.readyInMinutes,
+    popularity: recipe.popularity,
+    vegan: !!recipe.vegan,
+    vegetarian: !!recipe.vegetarian,
+    glutenFree: !!recipe.glutenFree
+  }));
+}
+
+async function addViewedRecipe(user_id, recipeId) {
+  await DButils.execQuery(`
+    INSERT IGNORE INTO ViewedRecipes (user_id, recipeId)
+    VALUES (${user_id}, ${recipeId})
+  `);
+}
+
+async function getViewedRecipes(user_id) {
+  const result = await DButils.execQuery(`
+    SELECT recipeId FROM ViewedRecipes WHERE user_id = ${user_id}
+  `);
+
+  return result.map(row => row.recipeId);
+}
 
 exports.addToLastWatched = addToLastWatched;
 exports.markAsFavorite = markAsFavorite;
 exports.getFavoriteRecipes = getFavoriteRecipes;
 exports.getLastWatched = getLastWatched;
+exports.insertRecipe = insertRecipe;
+exports.getUserRecipes = getUserRecipes;
+exports.addViewedRecipe = addViewedRecipe;
+exports.getViewedRecipes = getViewedRecipes;
