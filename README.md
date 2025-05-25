@@ -7,7 +7,9 @@ A full-featured Node.js RESTful API for searching, viewing, saving, and managing
 
 ## Id:
 Yehonatan Yamin - 206511727
+
 Ido Badash - 206917510
+
 Sahar Eitam - 318283116
 
 ## Features
@@ -170,7 +172,7 @@ POST /users/add-recipes
 
 ## Contributors
 
-- Ido Badash & Yehonatan
+- Ido & Yehonatan & Sahar
 - Spoonacular for the food data
 
 ## License
